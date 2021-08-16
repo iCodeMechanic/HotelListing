@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using HotelListing.Data;
+using HotelListing.IRepository;
+using HotelListing.Repository;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing
@@ -25,7 +27,8 @@ namespace HotelListing
             services.AddDbContext<DataContext>(options => 
                 options.UseSqlServer(Configuration.GetConnectionString("SqlConnection")));
 
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson(options => 
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
             services.AddCors(x =>
             {
@@ -33,7 +36,7 @@ namespace HotelListing
             });
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
+            services.AddTransient<IUnitOfWork,UnityOfWork>();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "HotelListing", Version = "v1" });
@@ -61,6 +64,10 @@ namespace HotelListing
 
             app.UseEndpoints(endpoints =>
             {
+                //Uncomment for Convention Based Routing
+                //endpoints.MapControllerRoute(
+                //    name: "default", 
+                //    pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapControllers();
             });
         }
