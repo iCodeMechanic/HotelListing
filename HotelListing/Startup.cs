@@ -6,8 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using HotelListing.Data;
+using HotelListing.Extentions;
 using HotelListing.IRepository;
 using HotelListing.Repository;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing
@@ -30,6 +32,11 @@ namespace HotelListing
             services.AddControllers().AddNewtonsoftJson(options => 
                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
+            services.AddAuthentication();
+
+            services.ConfigureIdentity();
+            services.ConfigureJwt(Configuration);
+
             services.AddCors(x =>
             {
                 x.AddPolicy("AllowAllCorsPolicy", y => y.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
@@ -37,6 +44,7 @@ namespace HotelListing
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             services.AddTransient<IUnitOfWork,UnityOfWork>();
+            services.AddTransient<IAuthManager, AuthManager>();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "HotelListing", Version = "v1" });
@@ -53,12 +61,14 @@ namespace HotelListing
             }
             app.UseSwagger();
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HotelListing v1"));
-            
-            app.UseHttpsRedirection();
 
+            // app.UseHttpsRedirection();
+            
             app.UseCors("AllowAllCorsPolicy");
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

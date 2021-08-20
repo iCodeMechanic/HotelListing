@@ -1,11 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using HotelListing.Dtos;
+using HotelListing.Entity;
 using HotelListing.IRepository;
 using Microsoft.Extensions.Logging;
 
@@ -42,8 +41,8 @@ namespace HotelListing.Controllers
             }
         }
 
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult> GetCountry(int id)
+        [HttpGet("{id:int}", Name = "GetHotel")]
+        public async Task<ActionResult> GetHotel(int id)
         {
             try
             {
@@ -52,9 +51,99 @@ namespace HotelListing.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Something went wrong in the {nameof(GetCountry)}");
+                _logger.LogError(ex, $"Something went wrong in the {nameof(GetHotel)}");
                 return BadRequest("Server Error");
             }
         }
+
+        [HttpPost]
+        public async Task<ActionResult> CreateHotel(CreateHotelDto hotelDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                _logger.LogError( $"Something went wrong in the {nameof(CreateHotel)}");
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var hotel = _mapper.Map<Hotel>(hotelDto);
+
+                await _unitOfWork.Hotels.Insert(hotel);
+                await _unitOfWork.Save();
+
+                return CreatedAtRoute("GetHotel",new {id = hotel.Id},hotel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Something went wrong in the {nameof(CreateHotel)}");
+                return BadRequest("Server Error");
+            }
+        }
+
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult> UpdateHotel(int id, UpdateHotelDto hotelDto)
+        {
+            if (!ModelState.IsValid && id > 1)
+            {
+                _logger.LogError($"Something went wrong in the {nameof(UpdateHotel)}");
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var hotel = await _unitOfWork.Hotels.Get(x=>x.Id == id);
+                if (hotel == null)
+                {
+                    _logger.LogError( $"Something went wrong in the {nameof(UpdateHotel)}");
+                    return BadRequest("Submit Data is invalid");
+                }
+
+                hotel = _mapper.Map(hotelDto, hotel);
+                _unitOfWork.Hotels.Update(hotel);
+                await _unitOfWork.Save();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Something went wrong in the {nameof(UpdateHotel)}");
+                return BadRequest("Server Error");
+            }
+        }
+
+        [HttpDelete("{Id:int}")]
+        public async Task<ActionResult> DeleteHotel(int id)
+        {
+            if (id < 1)
+            {
+                _logger.LogError($"Invalid DELETE attempt in the {nameof(CreateHotel)}");
+                return BadRequest();
+            }
+
+            try
+            {
+                var hotel = await _unitOfWork.Hotels.Get(q => q.Id == id);
+                if (hotel == null)
+                {
+                    _logger.LogError($"Invalid DELETE attempt in the {nameof(CreateHotel)}");
+                    return BadRequest("Submitted data is invalid");
+                }
+
+                await _unitOfWork.Hotels.Delete(id);
+                await _unitOfWork.Save();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Something went wrong in the {nameof(DeleteHotel)}");
+                return BadRequest("Server Error");
+            }
+        }
+        
+
+        
+
     }
 }

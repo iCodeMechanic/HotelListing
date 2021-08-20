@@ -8,6 +8,11 @@ namespace HotelListing.Dtos
         public int Id { get; set; }
         public Country Country { get; set; }
     }
+
+    public class UpdateHotelDto : CreateHotelDto
+    {
+
+    }
     public class CreateHotelDto
     {
        

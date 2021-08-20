@@ -19,4 +19,8 @@ namespace HotelListing.Dtos
         [StringLength(maximumLength: 2)]
         public string ShortName { get; set; }
     }
+    public class UpdateCountryDto : CreateCountryDto
+    {
+        
+    }
 }
