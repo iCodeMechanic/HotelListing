@@ -28,35 +28,23 @@ namespace HotelListing.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetCountries()
+        public async Task<ActionResult> GetCountries([FromQuery] RequestParams requestParams)
         {
-            try
-            {
-                var countries = await _unitOfWork.Countries.GetAll();
+            
+                var countries = await _unitOfWork.Countries.GetPagedListAll(requestParams);
                 return Ok(_mapper.Map<IList<CountryDto>>(countries));
                 
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,$"Something went wrong in the {nameof(GetCountries)}");
-                return BadRequest("Server Error");
-            }
+            
         }
         [Authorize]
         [HttpGet("{id:int}", Name = "GetCountry")]
         
         public async Task<ActionResult> GetCountry(int id)
         {
-            try
-            {
-                var country = await _unitOfWork.Countries.Get(x=>x.Id == id,new List<string>{"Hotels"});
-                return Ok(_mapper.Map<CountryDto>(country));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Something went wrong in the {nameof(GetCountry)}");
-                return BadRequest("Server Error");
-            }
+            
+            var country = await _unitOfWork.Countries.Get(x=>x.Id == id,new List<string>{"Hotels"});
+            return Ok(_mapper.Map<CountryDto>(country));
+            
         }
 
         [HttpPost]
@@ -68,20 +56,14 @@ namespace HotelListing.Controllers
                 return BadRequest(ModelState);
             }
 
-            try
-            {
-                var country = _mapper.Map<Country>(countryDto);
+            
+            var country = _mapper.Map<Country>(countryDto);
 
-                await _unitOfWork.Countries.Insert(country);
-                await _unitOfWork.Save();
+            await _unitOfWork.Countries.Insert(country);
+            await _unitOfWork.Save();
 
-                return CreatedAtRoute("GetCountry", new { id = country.Id }, country);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Something went wrong in the {nameof(CreateCountry)}");
-                return BadRequest("Server Error");
-            }
+            return CreatedAtRoute("GetCountry", new { id = country.Id }, country);
+            
         }
 
         [HttpPut("{id:int}")]
@@ -93,26 +75,20 @@ namespace HotelListing.Controllers
                 return BadRequest(ModelState);
             }
 
-            try
+            
+            var country = await _unitOfWork.Countries.Get(x => x.Id == id);
+            if (country == null)
             {
-                var country = await _unitOfWork.Countries.Get(x => x.Id == id);
-                if (country == null)
-                {
-                    _logger.LogError($"Something went wrong in the {nameof(UpdateCountry)}");
-                    return BadRequest("Submit Data is invalid");
-                }
-
-                country = _mapper.Map(countryDto, country);
-                _unitOfWork.Countries.Update(country);
-                await _unitOfWork.Save();
-
-                return NoContent();
+                _logger.LogError($"Something went wrong in the {nameof(UpdateCountry)}");
+                return BadRequest("Submit Data is invalid");
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Something went wrong in the {nameof(UpdateCountry)}");
-                return BadRequest("Server Error");
-            }
+
+            country = _mapper.Map(countryDto, country);
+            _unitOfWork.Countries.Update(country);
+            await _unitOfWork.Save();
+
+            return NoContent();
+           
         }
 
         [HttpDelete("{Id:int}")]
@@ -124,25 +100,19 @@ namespace HotelListing.Controllers
                 return BadRequest();
             }
 
-            try
+           
+            var country = await _unitOfWork.Countries.Get(q => q.Id == id);
+            if (country == null)
             {
-                var country = await _unitOfWork.Countries.Get(q => q.Id == id);
-                if (country == null)
-                {
-                    _logger.LogError($"Invalid DELETE attempt in the {nameof(DeleteCountry)}");
-                    return BadRequest("Submitted data is invalid");
-                }
-
-                await _unitOfWork.Countries.Delete(id);
-                await _unitOfWork.Save();
-
-                return NoContent();
+                _logger.LogError($"Invalid DELETE attempt in the {nameof(DeleteCountry)}");
+                return BadRequest("Submitted data is invalid");
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Something went wrong in the {nameof(DeleteCountry)}");
-                return BadRequest("Server Error");
-            }
+
+            await _unitOfWork.Countries.Delete(id);
+            await _unitOfWork.Save();
+
+            return NoContent();
+            
         }
     }
 }
