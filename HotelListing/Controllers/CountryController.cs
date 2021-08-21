@@ -6,6 +6,7 @@ using AutoMapper;
 using HotelListing.Dtos;
 using HotelListing.Entity;
 using HotelListing.IRepository;
+using Marvin.Cache.Headers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
@@ -28,13 +29,13 @@ namespace HotelListing.Controllers
         }
 
         [HttpGet]
+        //For Local Caching Variables Change for Particular endpoint
+        //[HttpCacheExpiration(CacheLocation = CacheLocation.Public, MaxAge = 60)]
+        //[HttpCacheValidation(MustRevalidate = false)]
         public async Task<ActionResult> GetCountries([FromQuery] RequestParams requestParams)
         {
-            
-                var countries = await _unitOfWork.Countries.GetPagedListAll(requestParams);
+            var countries = await _unitOfWork.Countries.GetPagedListAll(requestParams);
                 return Ok(_mapper.Map<IList<CountryDto>>(countries));
-                
-            
         }
         [Authorize]
         [HttpGet("{id:int}", Name = "GetCountry")]
